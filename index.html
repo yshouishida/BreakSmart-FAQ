@@ -1,0 +1,1731 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BreakSmart — IoT Circuit Breaker Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;700;900&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #070c14;
+            --surface: #0d1622;
+            --surface2: #111d2e;
+            --border: #1a2d45;
+            --accent: #00d4ff;
+            --accent2: #00ff99;
+            --accent3: #ff6b35;
+            --warn: #ffcc00;
+            --text: #d4e8ff;
+            /* CHANGED: Brightened for WCAG AA/AAA contrast on dark bg */
+            --text-muted: #7eb8d8;
+            --text-dim: #4a7a9a;
+            --glow: rgba(0, 212, 255, 0.3);
+            --glow2: rgba(0, 255, 153, 0.2);
+            --font-mono: 'Share Tech Mono', monospace;
+            --font-ui: 'Rajdhani', sans-serif;
+            --font-display: 'Exo 2', sans-serif;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-ui);
+            font-size: 16px;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* GRID BACKGROUND */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* NAV */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            height: 56px;
+            background: rgba(7, 12, 20, 0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-logo {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 1.1rem;
+            letter-spacing: 0.15em;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+
+        .nav-logo span {
+            color: var(--accent2);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0.25rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            /* CHANGED: raised from 0.72rem → 0.8rem (≥12px minimum) */
+            letter-spacing: 0.1em;
+            padding: 0.35rem 0.75rem;
+            border-radius: 3px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent);
+            background: rgba(0, 212, 255, 0.08);
+        }
+
+        /* SECTIONS */
+        section {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* HERO */
+        #hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 2rem 4rem;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .hero-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -60%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(ellipse, rgba(0, 212, 255, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            /* CHANGED: raised from 0.7rem → 0.8rem (≥12px minimum) */
+            letter-spacing: 0.2em;
+            color: var(--accent2);
+            background: rgba(0, 255, 153, 0.07);
+            border: 1px solid rgba(0, 255, 153, 0.25);
+            padding: 0.35rem 1rem;
+            /* CHANGED: slightly increased vertical padding for readability */
+            border-radius: 2px;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            animation: fadeUp 0.6s ease both;
+        }
+
+        .hero-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--accent2);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.4;
+                transform: scale(0.7);
+            }
+        }
+
+        .hero-title {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: clamp(3rem, 8vw, 6rem);
+            line-height: 0.95;
+            letter-spacing: -0.02em;
+            text-transform: uppercase;
+            animation: fadeUp 0.6s 0.1s ease both;
+        }
+
+        .hero-title .line1 {
+            color: var(--text);
+            display: block;
+        }
+
+        .hero-title .line2 {
+            display: block;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-sub {
+            max-width: 640px;
+            margin: 1.5rem auto 0;
+            font-size: 1.1rem;
+            color: var(--text);
+            /* CHANGED: promoted from --text-muted to --text for better contrast on hero */
+            font-weight: 400;
+            line-height: 1.7;
+            /* CHANGED: increased for readability */
+            animation: fadeUp 0.6s 0.2s ease both;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 2rem;
+            margin-top: 3rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            animation: fadeUp 0.6s 0.3s ease both;
+        }
+
+        .stat-chip {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            min-width: 110px;
+        }
+
+        .stat-chip .val {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 1.8rem;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .stat-chip .lbl {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            /* CHANGED: raised from 0.62rem → 0.75rem (≥12px minimum) */
+            color: var(--text-muted);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-top: 0.3rem;
+            /* CHANGED: slightly more breathing room */
+        }
+
+        .scroll-hint {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            /* CHANGED: raised from 0.65rem → 0.75rem (≥12px minimum) */
+            color: var(--text-muted);
+            /* CHANGED: promoted from --text-dim to --text-muted for contrast */
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateX(-50%) translateY(0);
+            }
+
+            50% {
+                transform: translateX(-50%) translateY(6px);
+            }
+        }
+
+        /* SECTION HEADERS */
+        .section-head {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-label {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            /* CHANGED: raised from 0.68rem → 0.78rem (≥12px minimum) */
+            letter-spacing: 0.25em;
+            color: var(--accent2);
+            text-transform: uppercase;
+            margin-bottom: 0.85rem;
+            /* CHANGED: slightly more space below label before title */
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            text-transform: uppercase;
+            letter-spacing: -0.01em;
+            color: var(--text);
+        }
+
+        .section-title span {
+            color: var(--accent);
+        }
+
+        /* SYSTEM FLOW */
+        #flow {
+            padding: 5rem 2rem;
+        }
+
+        .flow-container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .flow-steps {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0;
+            position: relative;
+        }
+
+        .flow-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            cursor: pointer;
+            padding: 0 0.5rem;
+        }
+
+        .flow-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 36px;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--border), var(--border) 40%, var(--accent) 50%, var(--border) 60%);
+            background-size: 200% 100%;
+            animation: flowAnim 2s linear infinite;
+        }
+
+        @keyframes flowAnim {
+            0% {
+                background-position: 100% 0;
+            }
+
+            100% {
+                background-position: -100% 0;
+            }
+        }
+
+        .step-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            position: relative;
+            z-index: 2;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .flow-step:hover .step-icon,
+        .flow-step.active .step-icon {
+            border-color: var(--accent);
+            background: rgba(0, 212, 255, 0.1);
+            box-shadow: 0 0 20px var(--glow);
+            transform: scale(1.1);
+        }
+
+        .step-num {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            /* CHANGED: raised from 0.6rem → 0.75rem (≥12px minimum) */
+            color: var(--accent);
+            letter-spacing: 0.15em;
+            margin-top: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .step-title {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text);
+            margin-top: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .step-desc {
+            font-size: 0.8rem;
+            /* CHANGED: raised from 0.75rem → 0.8rem for better legibility */
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+            /* CHANGED: slightly more separation */
+            line-height: 1.5;
+            /* CHANGED: improved line-height */
+        }
+
+        /* FLOW DETAIL PANEL */
+        .flow-detail {
+            margin-top: 2rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1.5rem;
+            min-height: 140px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .flow-detail::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
+            background: var(--accent);
+        }
+
+        .detail-tag {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            /* CHANGED: raised from 0.65rem → 0.75rem (≥12px minimum) */
+            color: var(--accent2);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 0.6rem;
+            /* CHANGED: slightly more breathing room */
+        }
+
+        .detail-title {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-body {
+            font-size: 0.9rem;
+            color: var(--text);
+            /* CHANGED: promoted to --text for WCAG-compliant contrast in content area */
+            line-height: 1.75;
+            /* CHANGED: slightly increased for readability */
+        }
+
+        .detail-code {
+            display: inline-block;
+            background: rgba(0, 212, 255, 0.08);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 3px;
+            padding: 0.1rem 0.4rem;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--accent);
+            margin: 0 0.1rem;
+        }
+
+        /* ARCHITECTURE */
+        #architecture {
+            padding: 5rem 2rem;
+            background: linear-gradient(180deg, transparent, rgba(0, 212, 255, 0.02), transparent);
+        }
+
+        .arch-container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .arch-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .arch-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .arch-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at top left, var(--card-glow, rgba(0, 212, 255, 0.04)) 0%, transparent 60%);
+            transition: opacity 0.3s;
+            opacity: 0;
+        }
+
+        .arch-card:hover::before {
+            opacity: 1;
+        }
+
+        .arch-card:hover {
+            border-color: rgba(0, 212, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .arch-card.esp32 {
+            --card-glow: rgba(0, 255, 153, 0.06);
+        }
+
+        .arch-card.esp32:hover {
+            border-color: rgba(0, 255, 153, 0.4);
+        }
+
+        .arch-card.db {
+            --card-glow: rgba(255, 107, 53, 0.06);
+        }
+
+        .arch-card.db:hover {
+            border-color: rgba(255, 107, 53, 0.4);
+        }
+
+        .arch-card.full {
+            grid-column: 1 / -1;
+        }
+
+        .arch-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .arch-icon {
+            font-size: 1.5rem;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 212, 255, 0.08);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .esp32 .arch-icon {
+            background: rgba(0, 255, 153, 0.08);
+            border-color: rgba(0, 255, 153, 0.2);
+        }
+
+        .db .arch-icon {
+            background: rgba(255, 107, 53, 0.08);
+            border-color: rgba(255, 107, 53, 0.2);
+        }
+
+        .arch-card-title {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            color: var(--text);
+        }
+
+        .arch-card-sub {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            /* CHANGED: raised from 0.65rem → 0.75rem (≥12px minimum) */
+            color: var(--text-muted);
+            letter-spacing: 0.1em;
+            margin-top: 0.2rem;
+            /* CHANGED: added slight gap below title */
+        }
+
+        .arch-features {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .arch-feat {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            /* CHANGED: raised slightly; stays consistent with 14px minimum */
+            color: var(--text-muted);
+            line-height: 1.6;
+            /* CHANGED: added for consistent vertical rhythm */
+        }
+
+        .arch-feat::before {
+            content: '▸';
+            color: var(--accent);
+            font-size: 0.7rem;
+            margin-top: 0.15rem;
+            flex-shrink: 0;
+        }
+
+        .esp32 .arch-feat::before {
+            color: var(--accent2);
+        }
+
+        .db .arch-feat::before {
+            color: var(--accent3);
+        }
+
+        /* WS EVENTS */
+        #events {
+            padding: 5rem 2rem;
+        }
+
+        .events-container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .event-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
+            transition: all 0.3s;
+            cursor: default;
+        }
+
+        .event-card:hover {
+            border-color: rgba(0, 212, 255, 0.3);
+        }
+
+        .event-direction {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            /* CHANGED: raised from 0.6rem → 0.75rem (≥12px minimum) */
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .dir-frontend {
+            color: var(--accent);
+        }
+
+        .dir-esp32 {
+            color: var(--accent2);
+        }
+
+        .dir-backend {
+            color: var(--accent3);
+        }
+
+        .event-name {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--text);
+            margin-bottom: 0.35rem;
+            background: rgba(0, 212, 255, 0.06);
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            display: inline-block;
+        }
+
+        .event-desc {
+            font-size: 0.875rem;
+            /* CHANGED: raised from 0.82rem → 0.875rem (14px minimum body text) */
+            color: var(--text-muted);
+            line-height: 1.6;
+            /* CHANGED: slightly improved line-height */
+        }
+
+        /* Q&A */
+        #qa {
+            padding: 5rem 2rem;
+            background: linear-gradient(180deg, transparent, rgba(0, 255, 153, 0.01), transparent);
+        }
+
+        .qa-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .qa-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0;
+        }
+
+        .qa-tab {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            /* CHANGED: raised from 0.72rem → 0.8rem (≥12px minimum) */
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.65rem 1.2rem;
+            /* CHANGED: slightly increased touch target */
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            transition: all 0.2s;
+        }
+
+        .qa-tab:hover {
+            color: var(--text);
+        }
+
+        .qa-tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .qa-tab[data-level="intermediate"].active {
+            color: var(--accent2);
+            border-bottom-color: var(--accent2);
+        }
+
+        .qa-tab[data-level="advanced"].active {
+            color: var(--accent3);
+            border-bottom-color: var(--accent3);
+        }
+
+        .qa-panel {
+            display: none;
+        }
+
+        .qa-panel.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .qa-item {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .qa-item:hover {
+            border-color: rgba(0, 212, 255, 0.25);
+        }
+
+        .qa-question {
+            width: 100%;
+            background: var(--surface);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            text-align: left;
+            gap: 1rem;
+            transition: background 0.2s;
+        }
+
+        .qa-question:hover {
+            background: var(--surface2);
+        }
+
+        .qa-q-text {
+            font-family: var(--font-ui);
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text);
+        }
+
+        .qa-arrow {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            transition: transform 0.3s;
+            flex-shrink: 0;
+        }
+
+        .qa-item.open .qa-arrow {
+            transform: rotate(180deg);
+            color: var(--accent);
+        }
+
+        .qa-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease;
+        }
+
+        .qa-item.open .qa-answer {
+            max-height: 400px;
+        }
+
+        .qa-answer-inner {
+            padding: 0.875rem 1.25rem 1.25rem;
+            /* CHANGED: unified padding shorthand with more bottom space */
+            font-size: 0.9rem;
+            /* CHANGED: raised from 0.88rem → 0.9rem; clear body text size */
+            color: var(--text);
+            /* CHANGED: promoted to --text for WCAG-compliant contrast in answer body */
+            line-height: 1.75;
+            /* CHANGED: slightly increased for improved readability */
+            border-top: 1px solid var(--border);
+            background: var(--surface2);
+        }
+
+        .qa-answer-inner .detail-code {
+            display: inline-block;
+            background: rgba(0, 212, 255, 0.08);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 3px;
+            padding: 0.05rem 0.35rem;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--accent);
+            margin: 0 0.1rem;
+        }
+
+        /* FOOTER */
+        footer {
+            padding: 2rem;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            /* CHANGED: raised from 0.65rem → 0.75rem (≥12px minimum) */
+            color: var(--text-muted);
+            /* CHANGED: promoted from --text-dim to --text-muted for contrast */
+            letter-spacing: 0.1em;
+        }
+
+        /* ANIMATIONS */
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* REVEAL ON SCROLL */
+        .reveal {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: none;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .flow-steps {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .flow-step:not(:last-child)::after {
+                display: none;
+            }
+
+            .arch-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .arch-card.full {
+                grid-column: 1;
+            }
+
+            .events-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-stats {
+                gap: 1rem;
+            }
+        }
+
+        /* CIRCUIT DECORATION */
+        .circuit-line {
+            position: absolute;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0.1;
+            height: 1px;
+            animation: scanLine 6s linear infinite;
+        }
+
+        @keyframes scanLine {
+            0% {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+
+            20% {
+                opacity: 0.15;
+            }
+
+            80% {
+                opacity: 0.15;
+            }
+
+            100% {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-logo">Break<span>Smart</span></div>
+        <ul class="nav-links">
+            <li><a href="#flow">System Flow</a></li>
+            <li><a href="#architecture">Architecture</a></li>
+            <li><a href="#events">WS Events</a></li>
+            <li><a href="#qa">Q&amp;A</a></li>
+        </ul>
+    </nav>
+
+    <!-- HERO -->
+    <section id="hero">
+        <div class="hero-glow"></div>
+
+        <div class="hero-badge">IoT Smart Circuit Breaker Dashboard</div>
+
+        <h1 class="hero-title">
+            <span class="line1">Break</span>
+            <span class="line2">Smart</span>
+        </h1>
+
+        <p class="hero-sub">
+            A local-network IoT system for monitoring and controlling 4 electrical relay circuits in real time — via
+            WebSocket, REST API, and ESP32 hardware.
+        </p>
+
+        <div class="hero-stats">
+            <div class="stat-chip">
+                <span class="val">4</span>
+                <span class="lbl">Relay Channels</span>
+            </div>
+            <div class="stat-chip">
+                <span class="val">ESP32</span>
+                <span class="lbl">MCU</span>
+            </div>
+            <div class="stat-chip">
+                <span class="val">WS</span>
+                <span class="lbl">Real-Time</span>
+            </div>
+            <div class="stat-chip">
+                <span class="val">LAN</span>
+                <span class="lbl">Offline First</span>
+            </div>
+            <div class="stat-chip">
+                <span class="val">MySQL</span>
+                <span class="lbl">Database</span>
+            </div>
+        </div>
+
+        <div class="scroll-hint">▼ &nbsp; scroll to explore &nbsp; ▼</div>
+    </section>
+
+    <!-- SYSTEM FLOW -->
+    <section id="flow">
+        <div class="flow-container">
+            <div class="section-head reveal">
+                <div class="section-label">Step-by-Step</div>
+                <h2 class="section-title">System <span>Data Flow</span></h2>
+            </div>
+
+            <div class="flow-steps reveal" id="flowSteps">
+                <div class="flow-step" data-idx="0">
+                    <div class="step-icon">🖱️</div>
+                    <div class="step-num">Step 01</div>
+                    <div class="step-title">User Input</div>
+                    <div class="step-desc">Browser dashboard</div>
+                </div>
+                <div class="flow-step" data-idx="1">
+                    <div class="step-icon">📡</div>
+                    <div class="step-num">Step 02</div>
+                    <div class="step-title">REST API</div>
+                    <div class="step-desc">Node.js backend</div>
+                </div>
+                <div class="flow-step" data-idx="2">
+                    <div class="step-icon">🗄️</div>
+                    <div class="step-num">Step 03</div>
+                    <div class="step-title">Database</div>
+                    <div class="step-desc">MySQL persist</div>
+                </div>
+                <div class="flow-step" data-idx="3">
+                    <div class="step-icon">🔌</div>
+                    <div class="step-num">Step 04</div>
+                    <div class="step-title">WebSocket</div>
+                    <div class="step-desc">ESP32 command</div>
+                </div>
+                <div class="flow-step" data-idx="4">
+                    <div class="step-icon">⚡</div>
+                    <div class="step-num">Step 05</div>
+                    <div class="step-title">Hardware</div>
+                    <div class="step-desc">GPIO relay toggle</div>
+                </div>
+            </div>
+
+            <div class="flow-detail reveal" id="flowDetail">
+                <div class="detail-tag">click any step above to inspect</div>
+                <div class="detail-title">End-to-End Flow</div>
+                <div class="detail-body">
+                    BreakSmart routes every user action through a clear, deterministic pipeline. Each step is logged,
+                    state changes are persisted to MySQL, and real-time WebSocket events keep every connected client —
+                    and the physical ESP32 hardware — in sync within milliseconds. Click any step above to see what
+                    happens at that stage.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ARCHITECTURE -->
+    <section id="architecture">
+        <div class="arch-container">
+            <div class="section-head reveal">
+                <div class="section-label">System Components</div>
+                <h2 class="section-title">System <span>Architecture</span></h2>
+            </div>
+
+            <div class="arch-grid">
+                <!-- Browser -->
+                <div class="arch-card reveal">
+                    <div class="arch-card-header">
+                        <div class="arch-icon">🌐</div>
+                        <div>
+                            <div class="arch-card-title">Browser Dashboard</div>
+                            <div class="arch-card-sub">HTML · JS · Chart.js — served from ESP32 LittleFS</div>
+                        </div>
+                    </div>
+                    <div class="arch-features">
+                        <div class="arch-feat">Single-page app: Dashboard, Analytics, Logs, Schedules, Settings</div>
+                        <div class="arch-feat">WebSocket client — subscribes to live <code
+                                class="detail-code">power:update</code>, <code class="detail-code">relay:update</code>,
+                            <code class="detail-code">logs:new</code>
+                        </div>
+                        <div class="arch-feat">Polling fallback (every 2 s) if WebSocket drops, with exponential backoff
+                            reconnect</div>
+                        <div class="arch-feat">Session token stored in localStorage — validated server-side on every
+                            request</div>
+                    </div>
+                </div>
+
+                <!-- Node.js -->
+                <div class="arch-card reveal">
+                    <div class="arch-card-header">
+                        <div class="arch-icon">⚙️</div>
+                        <div>
+                            <div class="arch-card-title">Node.js Backend</div>
+                            <div class="arch-card-sub">Express · ws · mysql2 · bcrypt — port 3000</div>
+                        </div>
+                    </div>
+                    <div class="arch-features">
+                        <div class="arch-feat">REST API under <code class="detail-code">/api/*</code> — handles relays,
+                            schedules, energy, users, notifications</div>
+                        <div class="arch-feat">WebSocket hub (<code class="detail-code">wsHub.js</code>) broadcasts to
+                            frontend clients AND ESP32 on the same socket server</div>
+                        <div class="arch-feat">Schedule runner fires every 60 s — reads <code
+                                class="detail-code">findDueNow()</code> and calls <code
+                                class="detail-code">RelayService.setState()</code></div>
+                        <div class="arch-feat">Alert engine checks overload thresholds after every sensor reading;
+                            generates notifications</div>
+                    </div>
+                </div>
+
+                <!-- MySQL -->
+                <div class="arch-card db reveal">
+                    <div class="arch-card-header">
+                        <div class="arch-icon">🗄️</div>
+                        <div>
+                            <div class="arch-card-title">MySQL Database</div>
+                            <div class="arch-card-sub">MariaDB / XAMPP — breaksmart schema</div>
+                        </div>
+                    </div>
+                    <div class="arch-features">
+                        <div class="arch-feat">Tables: <code class="detail-code">devices</code>, <code
+                                class="detail-code">relays</code>, <code class="detail-code">sensor_readings</code>,
+                            <code class="detail-code">energy_snapshots</code>, <code
+                                class="detail-code">schedules</code>, <code class="detail-code">activity_logs</code>,
+                            <code class="detail-code">notifications</code>, <code class="detail-code">users</code>
+                        </div>
+                        <div class="arch-feat">Schedule days stored as a bitmask (bitfield) — decoded to an array by the
+                            API layer</div>
+                        <div class="arch-feat">Energy analytics use aggregated views — daily/weekly/monthly group-by
+                            queries</div>
+                        <div class="arch-feat">Session tokens hashed and stored with expiry; bcrypt for passwords (12
+                            rounds)</div>
+                    </div>
+                </div>
+
+                <!-- ESP32 -->
+                <div class="arch-card esp32 reveal">
+                    <div class="arch-card-header">
+                        <div class="arch-icon">🔧</div>
+                        <div>
+                            <div class="arch-card-title">ESP32 Firmware</div>
+                            <div class="arch-card-sub">Arduino · LittleFS · WebSocket client — port 80</div>
+                        </div>
+                    </div>
+                    <div class="arch-features">
+                        <div class="arch-feat">Serves the browser dashboard from LittleFS flash filesystem (index.html,
+                            script.js, Chart.js)</div>
+                        <div class="arch-feat">Controls 4 relay GPIO pins (19, 18, 5, 17) — active-LOW relay boards
+                            supported</div>
+                        <div class="arch-feat">4× ACS712 current sensors on ADC pins (GPIO 34/35/32/33) — sends <code
+                                class="detail-code">esp32:reading</code> every 10 s</div>
+                        <div class="arch-feat">Sends <code class="detail-code">esp32:heartbeat</code> every 25 s to keep
+                            device online status in DB</div>
+                        <div class="arch-feat">Displays real-time data on 20×4 I²C LCD (SDA GPIO21, SCL GPIO22)</div>
+                    </div>
+                </div>
+
+                <!-- Power chain - full width -->
+                <div class="arch-card full reveal" style="--card-glow: rgba(255,204,0,0.04);">
+                    <div class="arch-card-header">
+                        <div class="arch-icon"
+                            style="background:rgba(255,204,0,0.08);border-color:rgba(255,204,0,0.2);">⚡</div>
+                        <div>
+                            <div class="arch-card-title">AC Power Chain</div>
+                            <div class="arch-card-sub">Wall plug → MCB → 4 relay channels → load sockets · HLK-5M05
+                                powers ESP32 (5V DC)</div>
+                        </div>
+                    </div>
+                    <div class="arch-features" style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem">
+                        <div class="arch-feat" style="color:var(--warn)">CH1: Relay1 → ACS712 #1 → Socket1</div>
+                        <div class="arch-feat" style="color:var(--warn)">CH2: Relay2 → ACS712 #2 → Socket2</div>
+                        <div class="arch-feat" style="color:var(--warn)">CH3: Relay3 → ACS712 #3 → Socket3</div>
+                        <div class="arch-feat" style="color:var(--warn)">CH4: Relay4 → ACS712 #4 → Socket4</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- WS EVENTS -->
+    <section id="events">
+        <div class="events-container">
+            <div class="section-head reveal">
+                <div class="section-label">Real-Time Protocol</div>
+                <h2 class="section-title">WebSocket <span>Events</span></h2>
+            </div>
+
+            <div class="events-grid">
+                <div class="event-card reveal">
+                    <div class="event-direction dir-frontend">Backend → Frontend</div>
+                    <div class="event-name">relay:update</div>
+                    <div class="event-desc">Fires whenever a relay is toggled ON or OFF. Carries <code
+                            class="detail-code">relay_id</code>, <code class="detail-code">is_on</code>, <code
+                            class="detail-code">name</code>. Triggers optimistic UI revert if mismatch.</div>
+                </div>
+                <div class="event-card reveal">
+                    <div class="event-direction dir-frontend">Backend → Frontend</div>
+                    <div class="event-name">power:update</div>
+                    <div class="event-desc">Sent after every ESP32 sensor reading. Contains voltage, current, power_w,
+                        energy_kwh, load_pct per relay. Updates the live gauge and stat cards.</div>
+                </div>
+                <div class="event-card reveal">
+                    <div class="event-direction dir-frontend">Backend → Frontend</div>
+                    <div class="event-name">logs:new</div>
+                    <div class="event-desc">Pushed whenever a new activity log entry is created — relay toggles,
+                        schedule executions, overload alerts. Updates Logs page in real time without polling.</div>
+                </div>
+                <div class="event-card reveal">
+                    <div class="event-direction dir-frontend">Backend → Frontend</div>
+                    <div class="event-name">device:status</div>
+                    <div class="event-desc">Sent when a heartbeat is received (online) or when the ESP32 WebSocket
+                        connection drops (offline). Drives the connectivity indicator in the UI.</div>
+                </div>
+                <div class="event-card reveal">
+                    <div class="event-direction dir-frontend">Backend → Frontend</div>
+                    <div class="event-name">notification:new</div>
+                    <div class="event-desc">Triggered when the alert engine generates a new notification — overload,
+                        relay trip, energy limit exceeded. Increments the bell badge counter.</div>
+                </div>
+                <div class="event-card reveal">
+                    <div class="event-direction dir-frontend">Backend → Frontend</div>
+                    <div class="event-name">dashboard:summary</div>
+                    <div class="event-desc">Re-broadcast after every relay toggle — carries aggregated <code
+                            class="detail-code">active_relays</code> count and <code
+                            class="detail-code">total_power_w</code> for the dashboard stat bar.</div>
+                </div>
+                <div class="event-card reveal" style="border-color:rgba(0,255,153,0.15)">
+                    <div class="event-direction dir-esp32">ESP32 → Backend</div>
+                    <div class="event-name">esp32:reading</div>
+                    <div class="event-desc">ESP32 sends sensor data every 10 seconds. Backend saves to <code
+                            class="detail-code">sensor_readings</code> table, runs alert checks, then re-emits as <code
+                            class="detail-code">power:update</code> to all frontends.</div>
+                </div>
+                <div class="event-card reveal" style="border-color:rgba(0,255,153,0.15)">
+                    <div class="event-direction dir-esp32">ESP32 → Backend</div>
+                    <div class="event-name">esp32:heartbeat</div>
+                    <div class="event-desc">Periodic keep-alive every 25 s. Backend updates <code
+                            class="detail-code">is_online = 1</code> and <code class="detail-code">last_seen_at</code>
+                        in the devices table; missing heartbeats trigger connectivity alerts.</div>
+                </div>
+                <div class="event-card reveal" style="border-color:rgba(0,255,153,0.15)">
+                    <div class="event-direction dir-esp32">ESP32 → Backend (ACK)</div>
+                    <div class="event-name">esp32:relay_ack</div>
+                    <div class="event-desc">Confirmation after the ESP32 physically actuates a GPIO pin. Backend
+                        re-broadcasts the confirmed state to frontends, completing the full round-trip.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Q&A -->
+    <section id="qa">
+        <div class="qa-container">
+            <div class="section-head reveal">
+                <div class="section-label">Panelist Preparation</div>
+                <h2 class="section-title">Anticipated <span>Questions</span></h2>
+            </div>
+
+            <div class="qa-tabs reveal">
+                <button class="qa-tab active" data-level="basic">🟢 Basic</button>
+                <button class="qa-tab" data-level="intermediate">🔵 Intermediate</button>
+                <button class="qa-tab" data-level="advanced">🔴 Advanced / Technical</button>
+            </div>
+
+            <!-- BASIC -->
+            <div class="qa-panel active" id="panel-basic">
+
+                <div class="qa-item">
+                    <button class="qa-question">
+                        <span class="qa-q-text">What is BreakSmart and what problem does it solve?</span>
+                        <span class="qa-arrow">▼</span>
+                    </button>
+                    <div class="qa-answer">
+                        <div class="qa-answer-inner">
+                            BreakSmart is a smart circuit breaker monitoring and control system. It solves the problem
+                            of not being able to remotely manage, monitor, or automate the electrical circuits in a
+                            building. Instead of manually toggling breakers, users can control 4 relay channels (outlet
+                            circuits) from any web browser on the local network, view real-time power consumption, set
+                            automated schedules, and receive alerts — all without cloud dependency.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <button class="qa-question">
+                        <span class="qa-q-text">How does the system work at a high level?</span>
+                        <span class="qa-arrow">▼</span>
+                    </button>
+                    <div class="qa-answer">
+                        <div class="qa-answer-inner">
+                            The ESP32 microcontroller serves a browser dashboard and physically controls 4 electrical
+                            relays and reads current sensors. A Node.js backend server running on a PC handles the
+                            logic, stores data in MySQL, and acts as a message broker using WebSocket. The browser talks
+                            to Node.js via REST API and WebSocket. Node.js then sends commands to the ESP32 over
+                            WebSocket to actuate hardware in real time.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <button class="qa-question">
+                        <span class="qa-q-text">Does this require an internet connection to work?</span>
+                        <span class="qa-arrow">▼</span>
+                    </button>
+                    <div class="qa-answer">
+                        <div class="qa-answer-inner">
+                            No. BreakSmart is fully offline-capable after initial setup. The ESP32 serves the entire
+                            dashboard (HTML, JavaScript, Chart.js) from its own flash filesystem over your local Wi-Fi.
+                            The Node.js backend and MySQL database run on a local PC. Internet is only needed during
+                            initial setup to download Node.js, XAMPP, and libraries — never at runtime.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <button class="qa-question">
+                        <span class="qa-q-text">What does the user actually see and control?</span>
+                        <span class="qa-arrow">▼</span>
+                    </button>
+                    <div class="qa-answer">
+                        <div class="qa-answer-inner">
+                            The dashboard has several pages: a main Dashboard with live power stats and a gauge, an
+                            Outlet Control page with 4 relay cards (toggle buttons, rename, schedule), an Analytics page
+                            with energy bar/line charts, a Logs page with the activity history, a Notifications panel,
+                            and a Settings page for thresholds and user preferences.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <button class="qa-question">
+                        <span class="qa-q-text">What hardware is required?</span>
+                        <span class="qa-arrow">▼</span>
+                    </button>
+                    <div class="qa-answer">
+                        <div class="qa-answer-inner">
+                            The core hardware is an ESP32 development board, a 4-channel relay module (active-LOW), 4×
+                            ACS712 current sensors, an HLK-5M05 AC-to-DC converter for powering the ESP32, a standard
+                            MCB (miniature circuit breaker), and a 20×4 I²C LCD display. All components connect to the
+                            ESP32 GPIOs — relays on GPIO 19/18/5/17, sensors on ADC pins 34/35/32/33, and LCD on I²C
+                            pins GPIO21/22.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <button class="qa-question">
+                        <span class="qa-q-text">What are the login credentials?</span>
+                        <span class="qa-arrow">▼</span>
+                    </button>
+                    <div class="qa-answer">
+                        <div class="qa-answer-inner">
+                            Default admin credentials after running the setup script are: Email: <code
+                                class="detail-code">admin@breaksmart.io</code>, Password: <code
+                                class="detail-code">breaksmart2024</code>. The session is stored in localStorage and
+                            validated server-side on every API request. Sessions expire after 7 days.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- INTERMEDIATE -->
+            <div class="qa-panel" id="panel-intermediate">
+
+                <div class="qa-item">
+                    <button class="qa-question">
+                        <span class="qa-q-text">How does the relay toggle flow work end-to-end?</span>
+                        <span class="qa-arrow">▼</span>
+                    </button>
+                    <div class="qa-answer">
+                        <div class="qa-answer-inner">
+                            (1) User clicks the toggle in the browser — the UI updates optimistically. (2) <code
+                                class="detail-code">script.js</code> sends <code
+                                class="detail-code">PATCH /api/relays/:id/state</code> to Node.js. (3) Node.js calls
+                            <code class="detail-code">RelayService.setState()</code> which updates the DB and emits
+                            <code class="detail-code">relay:update</code> over WebSocket to all frontends AND <code
+                                class="detail-code">relay:command</code> to the ESP32. (4) ESP32 actuates the GPIO pin
+                            and sends <code class="detail-code">esp32:relay_ack</code> back to Node.js. (5) Node.js
+                            re-broadcasts the confirmed state to all frontends. If the backend call fails, the
+                            optimistic UI update is reverted.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <button class="qa-question">
+                        <span class="qa-q-text">How does the scheduling system work?</span>
+                        <span class="qa-arrow">▼</span>
+                    </button>
+                    <div class="qa-answer">
+                        <div class="qa-answer-inner">
+                            Schedules are stored in MySQL with time, action (on/off), and a day-of-week bitmask. The
+                            Node.js server runs a schedule checker every 60 seconds, aligned to the minute boundary. It
+                            calls <code class="detail-code">ScheduleModel.findDueNow()</code> which queries for enabled
+                            schedules matching the current time and day. Due schedules are executed via <code
+                                class="detail-code">RelayService.setState()</code> — the same path as manual toggles,
+                            ensuring WebSocket broadcast and DB update. The ESP32 also polls <code
+                                class="detail-code">GET /api/schedules/due</code> every 60 s as a hardware-level
+                            fallback in case the WebSocket is disconnected.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <button class="qa-question">
+                        <span class="qa-q-text">How does the system detect overloads and send alerts?</span>
+                        <span class="qa-arrow">▼</span>
+                    </button>
+                    <div class="qa-answer">
+                        <div class="qa-answer-inner">
+                            The ESP32 sends <code class="detail-code">esp32:reading</code> events every 10 seconds with
+                            current and power data per relay. On the backend, <code
+                                class="detail-code">alertEngine.js</code> checks the incoming readings against the
+                            device's <code class="detail-code">max_load_w</code> and <code
+                                class="detail-code">alert_threshold_pct</code> thresholds stored in <code
+                                class="detail-code">device_thresholds</code>. If a threshold is breached, the alert
+                            engine creates a notification record in MySQL and emits a <code
+                                class="detail-code">notification:new</code> WebSocket event so the browser badge updates
+                            immediately. A daily energy report also fires at midnight.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <button class="qa-question">
+                        <span class="qa-q-text">What happens when the WebSocket connection drops?</span>
+                        <span class="qa-arrow">▼</span>
+                    </button>
+                    <div class="qa-answer">
+                        <div class="qa-answer-inner">
+                            The frontend detects the WebSocket close event and automatically falls back to HTTP polling
+                            every 2 seconds (<code class="detail-code">POLL_MS = 2000</code>). It polls the relay
+                            states, latest readings, and activity logs via REST API. Simultaneously, it attempts to
+                            reconnect to the WebSocket with exponential backoff. The ESP32 also detects WebSocket
+                            disconnect and independently falls back to polling <code
+                                class="detail-code">/api/schedules/due</code> to ensure schedules still fire on
+                            hardware. The Node.js server is configured with keepAliveTimeout of 65 s and a 2-minute
+                            socket timeout to prevent premature TCP resets.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <button class="qa-question">
+                        <span class="qa-q-text">How is power consumption measured?</span>
+                        <span class="qa-arrow">▼</span>
+                    </button>
+                    <div class="qa-answer">
+                        <div class="qa-answer-inner">
+                            Each of the 4 relay channels has an ACS712 current sensor wired in series with the load. The
+                            ESP32 reads the analog voltage from the ACS712 on ADC pins (GPIO 34, 35, 32, 33). The ACS712
+                            outputs a voltage proportional to current; the ESP32 calculates RMS current, then derives
+                            power (W) assuming a known AC voltage and power factor. Energy (kWh) is calculated by
+                            integrating power over time. These values are sent as <code
+                                class="detail-code">esp32:reading</code> WebSocket events, stored in <code
+                                class="detail-code">sensor_readings</code>, and aggregated into <code
+                                class="detail-code">energy_snapshots</code> for charting.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <button class="qa-question">
+                        <span class="qa-q-text">What does the Node.js service layer do?</span>
+                        <span class="qa-arrow">▼</span>
+                    </button>
+                    <div class="qa-answer">
+                        <div class="qa-answer-inner">
+                            The backend follows a layered architecture: Controllers (HTTP handlers) → Services (business
+                            logic) → Models (raw DB queries). Services are responsible for both executing the business
+                            logic AND emitting WebSocket events after every state change. For example, <code
+                                class="detail-code">relayService.setState()</code> updates the DB, logs the activity,
+                            emits <code class="detail-code">relay:update</code> and <code
+                                class="detail-code">dashboard:summary</code> via the WebSocket hub. This means real-time
+                            updates are guaranteed regardless of whether a toggle comes from a user, a schedule, or the
+                            <code class="detail-code">/logRelay</code> legacy shim.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ADVANCED -->
+            <div class="qa-panel" id="panel-advanced">
+
+                <div class="qa-item">
+                    <button class="qa-question">
+                        <span class="qa-q-text">How does the WebSocket hub work technically?</span>
+                        <span class="qa-arrow">▼</span>
+                    </button>
+                    <div class="qa-answer">
+                        <div class="qa-answer-inner">
+                            <code class="detail-code">wsHub.js</code> uses the native Node.js <code
+                                class="detail-code">ws</code> library and attaches to the same <code
+                                class="detail-code">http.createServer()</code> instance as Express, so both REST and
+                            WebSocket share port 3000. The hub maintains a Set of connected clients tagged by type
+                            (<code class="detail-code">frontend</code> vs <code class="detail-code">esp32</code>).
+                            Broadcast helpers like <code class="detail-code">emitRelayUpdate()</code> iterate the Set
+                            and serialise JSON. The ESP32 identifies itself by sending a <code
+                                class="detail-code">{ "event": "esp32:identify", "device_id": 1 }</code> message on
+                            connect, so targeted commands (like <code class="detail-code">relay:command</code>) are only
+                            sent to the ESP32 client, not all frontends.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <button class="qa-question">
+                        <span class="qa-q-text">Why is the bitmask encoding used for schedule days?</span>
+                        <span class="qa-arrow">▼</span>
+                    </button>
+                    <div class="qa-answer">
+                        <div class="qa-answer-inner">
+                            Schedule days (Mon–Sun) are stored as a 7-bit integer bitmask in a single <code
+                                class="detail-code">TINYINT</code> column. Bit 0 = Monday, Bit 6 = Sunday. This makes
+                            the "due now" query efficient — a bitwise AND against the current day-of-week bit is
+                            executed directly in MySQL: <code
+                                class="detail-code">days_bitmask & (1 &lt;&lt; weekday) != 0</code>. It avoids a
+                            separate junction table and makes the query O(1) on an indexed column. The API layer in
+                            <code class="detail-code">ScheduleModel.js</code> decodes the bitmask back to an array of
+                            day strings for the frontend.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <button class="qa-question">
+                        <span class="qa-q-text">How does the schedule runner avoid double-firing and relay
+                            flicker?</span>
+                        <span class="qa-arrow">▼</span>
+                    </button>
+                    <div class="qa-answer">
+                        <div class="qa-answer-inner">
+                            An early design bug caused double relay commands (once from the schedule runner via
+                            WebSocket, and once via a separate <code class="detail-code">wsHub.emitRelayCommand()</code>
+                            call). The fix was to route ALL schedule executions exclusively through <code
+                                class="detail-code">RelayService.setState()</code>, which internally calls <code
+                                class="detail-code">emitRelayUpdate()</code> — which in turn sends <code
+                                class="detail-code">relay:command</code> to the ESP32. The schedule runner no longer
+                            calls any WebSocket function directly. Additionally, the HTTP server's <code
+                                class="detail-code">keepAliveTimeout</code> is set to 65 s and <code
+                                class="detail-code">headersTimeout</code> to 70 s to prevent NAT router TCP resets from
+                            being misinterpreted as WebSocket closes by the ESP32.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <button class="qa-question">
+                        <span class="qa-q-text">What is the /logRelay shim and why does it exist?</span>
+                        <span class="qa-arrow">▼</span>
+                    </button>
+                    <div class="qa-answer">
+                        <div class="qa-answer-inner">
+                            Older ESP32 firmware versions used a simpler HTTP POST to <code
+                                class="detail-code">/logRelay</code> instead of WebSocket events. The compatibility shim
+                            at <code class="detail-code">server.js</code> catches these legacy calls, updates the DB,
+                            and re-broadcasts via the WebSocket hub — so older firmware units still work without
+                            rewriting the ESP32 sketch. The shim maps the legacy <code
+                                class="detail-code">{ relay, state }</code> payload to the normalised relay update
+                            event, ensuring all connected frontends receive real-time updates even from legacy hardware.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <button class="qa-question">
+                        <span class="qa-q-text">How would you scale BreakSmart to support multiple devices?</span>
+                        <span class="qa-arrow">▼</span>
+                    </button>
+                    <div class="qa-answer">
+                        <div class="qa-answer-inner">
+                            The schema already includes a <code class="detail-code">device_id</code> foreign key on
+                            every table — relay, reading, log, and schedule rows are all device-scoped. The WebSocket
+                            hub tags each connected ESP32 by <code class="detail-code">device_id</code>, so <code
+                                class="detail-code">relay:command</code> events are routed only to the correct device.
+                            Scaling to additional units requires: (1) inserting a new row in the <code
+                                class="detail-code">devices</code> table, (2) flashing a new ESP32 with the correct
+                            <code class="detail-code">DEVICE_ID</code>, (3) no backend code changes. For horizontal
+                            scaling beyond a single Node process, the WebSocket hub would need to be extracted into a
+                            Redis pub/sub adapter to share state across multiple Node instances.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <button class="qa-question">
+                        <span class="qa-q-text">What security measures are implemented?</span>
+                        <span class="qa-arrow">▼</span>
+                    </button>
+                    <div class="qa-answer">
+                        <div class="qa-answer-inner">
+                            Security layers include: (1) Helmet.js sets HTTP security headers (XSS protection,
+                            content-type sniffing prevention). (2) Passwords are bcrypt-hashed with cost factor 12. (3)
+                            Session tokens are UUIDs stored hashed in MySQL with a 7-day expiry — validated on every API
+                            request via the <code class="detail-code">X-Session-Token</code> header. (4) CORS is
+                            configurable — in production, <code class="detail-code">CORS_ORIGIN</code> should be set to
+                            the ESP32's IP to restrict API access. (5) express-validator sanitizes and validates all
+                            incoming request bodies. In a production deployment, WS and HTTP should be behind HTTPS/WSS,
+                            and the MySQL user should be restricted to the breaksmart database only.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div>BREAKSMART &nbsp;·&nbsp; IoT Circuit Breaker Dashboard &nbsp;·&nbsp; ESP32 + Node.js + MySQL</div>
+        <div style="margin-top:0.35rem;opacity:0.5">v6.1 &nbsp;—&nbsp; Local Network · Offline First · Real-Time
+            WebSocket</div>
+    </footer>
+
+    <script>
+        // ── FLOW STEPS ────────────────────────────────────────────────────────────────
+        const flowData = [
+            {
+                tag: 'Step 01 — User Interface',
+                title: 'Browser Dashboard',
+                body: `The user opens the dashboard served from the ESP32's LittleFS filesystem at <span class="detail-code">http://ESP32_IP</span>. The single-page app (HTML + <span class="detail-code">script.js</span>) loads and authenticates via <span class="detail-code">X-Session-Token</span>. A persistent WebSocket connection to <span class="detail-code">ws://NODE_SERVER_IP:3000/ws</span> is established so the UI stays live without polling.`
+            },
+            {
+                tag: 'Step 02 — REST API Call',
+                title: 'Node.js Receives the Request',
+                body: `<span class="detail-code">script.js</span> sends <span class="detail-code">PATCH /api/relays/:id/state</span> with body <span class="detail-code">{ is_on: 1, user_id }</span>. The Express controller calls <span class="detail-code">RelayService.setState()</span>. The UI updates optimistically — if the request fails, it reverts automatically. All API responses follow the standard envelope: <span class="detail-code">{ success, data, message }</span>.`
+            },
+            {
+                tag: 'Step 03 — Persistence',
+                title: 'MySQL Write + Activity Log',
+                body: `<span class="detail-code">RelayService</span> calls <span class="detail-code">RelayModel.updateState()</span> to persist the new <span class="detail-code">is_on</span> value in the <span class="detail-code">relays</span> table. It also writes an entry to <span class="detail-code">activity_logs</span> via <span class="detail-code">ActivityService</span>. All DB operations use the <span class="detail-code">mysql2</span> connection pool — no blocking queries.`
+            },
+            {
+                tag: 'Step 04 — WebSocket Broadcast',
+                title: 'Real-Time Event Emission',
+                body: `After the DB write, <span class="detail-code">wsHub.emitRelayUpdate()</span> broadcasts <span class="detail-code">relay:update</span> to all connected frontend clients (so every open browser tab updates simultaneously). It also sends <span class="detail-code">relay:command</span> specifically to the ESP32 client (identified by <span class="detail-code">device_id</span>). A <span class="detail-code">dashboard:summary</span> event carries updated aggregate stats.`
+            },
+            {
+                tag: 'Step 05 — Hardware Actuation',
+                title: 'ESP32 GPIO + ACK',
+                body: `The ESP32 receives <span class="detail-code">relay:command</span>, drives the corresponding GPIO pin HIGH or LOW (active-LOW relay: LOW = energised). It sends <span class="detail-code">esp32:relay_ack</span> back to Node.js to confirm physical actuation. Node.js re-broadcasts the confirmed state to all frontends, completing the full round-trip. The physical click of the relay can be heard within ~50–100 ms of the user's click.`
+            }
+        ];
+
+        const steps = document.querySelectorAll('.flow-step');
+        const detail = document.getElementById('flowDetail');
+
+        function setFlowStep(idx) {
+            steps.forEach((s, i) => s.classList.toggle('active', i === idx));
+            const d = flowData[idx];
+            detail.innerHTML = `
+    <div class="detail-tag">${d.tag}</div>
+    <div class="detail-title">${d.title}</div>
+    <div class="detail-body">${d.body}</div>
+  `;
+        }
+
+        steps.forEach(s => {
+            s.addEventListener('click', () => setFlowStep(Number(s.dataset.idx)));
+        });
+
+        // Auto-cycle
+        let autoIdx = 0;
+        const auto = setInterval(() => {
+            autoIdx = (autoIdx + 1) % 5;
+            setFlowStep(autoIdx);
+        }, 3000);
+
+        steps.forEach(s => s.addEventListener('click', () => clearInterval(auto)));
+
+        // ── Q&A TABS ──────────────────────────────────────────────────────────────────
+        document.querySelectorAll('.qa-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.qa-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.qa-panel').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('panel-' + tab.dataset.level).classList.add('active');
+            });
+        });
+
+        // ── Q&A ACCORDION ─────────────────────────────────────────────────────────────
+        document.querySelectorAll('.qa-question').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const item = btn.closest('.qa-item');
+                const wasOpen = item.classList.contains('open');
+                item.closest('.qa-panel').querySelectorAll('.qa-item').forEach(i => i.classList.remove('open'));
+                if (!wasOpen) item.classList.add('open');
+            });
+        });
+
+        // ── SCROLL REVEAL ─────────────────────────────────────────────────────────────
+        const io = new IntersectionObserver(entries => {
+            entries.forEach((e, i) => {
+                if (e.isIntersecting) {
+                    setTimeout(() => e.target.classList.add('visible'), i * 60);
+                    io.unobserve(e.target);
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+        // ── ACTIVE NAV ────────────────────────────────────────────────────────────────
+        const sections = document.querySelectorAll('section[id]');
+        const sio = new IntersectionObserver(entries => {
+            entries.forEach(e => {
+                const link = document.querySelector(`.nav-links a[href="#${e.target.id}"]`);
+                if (link) link.style.color = e.isIntersecting ? 'var(--accent)' : '';
+            });
+        }, { threshold: 0.5 });
+        sections.forEach(s => sio.observe(s));
+    </script>
+</body>
+
+</html>
