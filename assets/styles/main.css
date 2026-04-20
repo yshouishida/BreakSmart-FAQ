@@ -1,18 +1,39 @@
 :root {
-    --bg: #070c14;
-    --surface: #0d1622;
-    --surface2: #111d2e;
-    --border: #1a2d45;
-    --accent: #00d4ff;
-    --accent2: #00ff99;
-    --accent3: #ff6b35;
-    --warn: #ffcc00;
-    --text: #d4e8ff;
-    /* CHANGED: Brightened for WCAG AA/AAA contrast on dark bg */
-    --text-muted: #7eb8d8;
-    --text-dim: #4a7a9a;
-    --glow: rgba(0, 212, 255, 0.3);
-    --glow2: rgba(0, 255, 153, 0.2);
+    --color-primary: #1a4fb3;
+    --color-primary-hover: #123d8a;
+    --color-secondary: #1b3f7a;
+    --color-accent: #ffd678;
+    --color-accent-hover: #f7c85c;
+    --color-background: #f0f5ff;
+    --color-surface: #ffffff;
+    --color-surface-2: #f8faff;
+    --text-primary: #0f1c35;
+    --text-secondary: #5a6a85;
+    --border: #dde6f7;
+    --shadow-soft: 0 2px 8px rgba(16, 49, 107, 0.07);
+    --shadow-medium: 0 6px 20px rgba(16, 49, 107, 0.1);
+    --shadow-strong: 0 12px 36px rgba(16, 49, 107, 0.14);
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --relay1: #1a4fb3;
+    --relay2: #10b981;
+    --relay3: #f59e0b;
+    --relay4: #ef4444;
+
+    /* Internal mappings for component usage */
+    --bg: var(--color-background);
+    --surface: var(--color-surface);
+    --surface2: var(--color-surface-2);
+    --accent: var(--color-primary);
+    --accent2: var(--relay2);
+    --accent3: var(--relay3);
+    --warn: var(--color-accent);
+    --text: var(--text-primary);
+    --text-muted: var(--text-secondary);
+    --text-dim: #8a9ab5;
+    --glow: rgba(26, 79, 179, 0.2);
+    --glow2: rgba(16, 185, 129, 0.15);
     --font-mono: 'Share Tech Mono', monospace;
     --font-ui: 'Rajdhani', sans-serif;
     --font-display: 'Exo 2', sans-serif;
@@ -45,8 +66,8 @@ body::before {
     position: fixed;
     inset: 0;
     background-image:
-        linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+        linear-gradient(rgba(26, 79, 179, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(26, 79, 179, 0.04) 1px, transparent 1px);
     background-size: 40px 40px;
     pointer-events: none;
     z-index: 0;
@@ -64,7 +85,7 @@ nav {
     justify-content: space-between;
     padding: 0 2rem;
     height: 56px;
-    background: rgba(7, 12, 20, 0.92);
+    background: rgba(240, 245, 255, 0.95);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border);
 }
@@ -103,7 +124,7 @@ nav {
 
 .nav-links a:hover {
     color: var(--accent);
-    background: rgba(0, 212, 255, 0.08);
+    background: rgba(26, 79, 179, 0.07);
 }
 
 /* SECTIONS */
@@ -131,7 +152,7 @@ section {
     transform: translate(-50%, -60%);
     width: 600px;
     height: 600px;
-    background: radial-gradient(ellipse, rgba(0, 212, 255, 0.08) 0%, transparent 70%);
+    background: radial-gradient(ellipse, rgba(26, 79, 179, 0.08) 0%, transparent 70%);
     pointer-events: none;
 }
 
@@ -144,8 +165,8 @@ section {
     /* CHANGED: raised from 0.7rem → 0.8rem (≥12px minimum) */
     letter-spacing: 0.2em;
     color: var(--accent2);
-    background: rgba(0, 255, 153, 0.07);
-    border: 1px solid rgba(0, 255, 153, 0.25);
+    background: rgba(16, 185, 129, 0.07);
+    border: 1px solid rgba(16, 185, 129, 0.25);
     padding: 0.35rem 1rem;
     /* CHANGED: slightly increased vertical padding for readability */
     border-radius: 2px;
@@ -376,7 +397,7 @@ section {
 .flow-step:hover .step-icon,
 .flow-step.active .step-icon {
     border-color: var(--accent);
-    background: rgba(0, 212, 255, 0.1);
+    background: rgba(26, 79, 179, 0.08);
     box-shadow: 0 0 20px var(--glow);
     transform: scale(1.1);
 }
@@ -463,8 +484,8 @@ section {
 
 .detail-code {
     display: inline-block;
-    background: rgba(0, 212, 255, 0.08);
-    border: 1px solid rgba(0, 212, 255, 0.2);
+    background: rgba(26, 79, 179, 0.07);
+    border: 1px solid rgba(26, 79, 179, 0.2);
     border-radius: 3px;
     padding: 0.1rem 0.4rem;
     font-family: var(--font-mono);
@@ -476,7 +497,7 @@ section {
 /* ARCHITECTURE */
 #architecture {
     padding: 5rem 2rem;
-    background: linear-gradient(180deg, transparent, rgba(0, 212, 255, 0.02), transparent);
+    background: linear-gradient(180deg, transparent, rgba(26, 79, 179, 0.02), transparent);
 }
 
 .arch-container {
@@ -505,7 +526,7 @@ section {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at top left, var(--card-glow, rgba(0, 212, 255, 0.04)) 0%, transparent 60%);
+    background: radial-gradient(ellipse at top left, var(--card-glow, rgba(26, 79, 179, 0.04)) 0%, transparent 60%);
     transition: opacity 0.3s;
     opacity: 0;
 }
@@ -515,24 +536,24 @@ section {
 }
 
 .arch-card:hover {
-    border-color: rgba(0, 212, 255, 0.4);
+    border-color: rgba(26, 79, 179, 0.35);
     transform: translateY(-2px);
 }
 
 .arch-card.esp32 {
-    --card-glow: rgba(0, 255, 153, 0.06);
+    --card-glow: rgba(16, 185, 129, 0.06);
 }
 
 .arch-card.esp32:hover {
-    border-color: rgba(0, 255, 153, 0.4);
+    border-color: rgba(16, 185, 129, 0.4);
 }
 
 .arch-card.db {
-    --card-glow: rgba(255, 107, 53, 0.06);
+    --card-glow: rgba(245, 158, 11, 0.06);
 }
 
 .arch-card.db:hover {
-    border-color: rgba(255, 107, 53, 0.4);
+    border-color: rgba(245, 158, 11, 0.4);
 }
 
 .arch-card.full {
@@ -553,19 +574,19 @@ section {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 212, 255, 0.08);
-    border: 1px solid rgba(0, 212, 255, 0.2);
+    background: rgba(26, 79, 179, 0.07);
+    border: 1px solid rgba(26, 79, 179, 0.2);
     border-radius: 4px;
 }
 
 .esp32 .arch-icon {
-    background: rgba(0, 255, 153, 0.08);
-    border-color: rgba(0, 255, 153, 0.2);
+    background: rgba(16, 185, 129, 0.08);
+    border-color: rgba(16, 185, 129, 0.2);
 }
 
 .db .arch-icon {
-    background: rgba(255, 107, 53, 0.08);
-    border-color: rgba(255, 107, 53, 0.2);
+    background: rgba(245, 158, 11, 0.08);
+    border-color: rgba(245, 158, 11, 0.2);
 }
 
 .arch-card-title {
@@ -645,7 +666,7 @@ section {
 }
 
 .event-card:hover {
-    border-color: rgba(0, 212, 255, 0.3);
+    border-color: rgba(26, 79, 179, 0.25);
 }
 
 .event-direction {
@@ -674,7 +695,7 @@ section {
     font-size: 0.85rem;
     color: var(--text);
     margin-bottom: 0.35rem;
-    background: rgba(0, 212, 255, 0.06);
+    background: rgba(26, 79, 179, 0.05);
     padding: 0.2rem 0.5rem;
     border-radius: 3px;
     display: inline-block;
@@ -691,7 +712,7 @@ section {
 /* Q&A */
 #qa {
     padding: 5rem 2rem;
-    background: linear-gradient(180deg, transparent, rgba(0, 255, 153, 0.01), transparent);
+    background: linear-gradient(180deg, transparent, rgba(16, 185, 129, 0.01), transparent);
 }
 
 .qa-container {
@@ -761,7 +782,7 @@ section {
 }
 
 .qa-item:hover {
-    border-color: rgba(0, 212, 255, 0.25);
+    border-color: rgba(26, 79, 179, 0.2);
 }
 
 .qa-question {
@@ -826,8 +847,8 @@ section {
 
 .qa-answer-inner .detail-code {
     display: inline-block;
-    background: rgba(0, 212, 255, 0.08);
-    border: 1px solid rgba(0, 212, 255, 0.2);
+    background: rgba(26, 79, 179, 0.07);
+    border: 1px solid rgba(26, 79, 179, 0.2);
     border-radius: 3px;
     padding: 0.05rem 0.35rem;
     font-family: var(--font-mono);
