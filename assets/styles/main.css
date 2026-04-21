@@ -8,7 +8,7 @@
     --color-surface: #ffffff;
     --color-surface-2: #f8faff;
     --text-primary: #0f1c35;
-    --text-secondary: #5a6a85;
+    --text-secondary: #1e3050;
     --border: #dde6f7;
     --shadow-soft: 0 2px 8px rgba(16, 49, 107, 0.07);
     --shadow-medium: 0 6px 20px rgba(16, 49, 107, 0.1);
@@ -26,12 +26,12 @@
     --surface: var(--color-surface);
     --surface2: var(--color-surface-2);
     --accent: var(--color-primary);
-    --accent2: var(--relay2);
+    --accent2: #0a5e3f;
     --accent3: var(--relay3);
     --warn: var(--color-accent);
     --text: var(--text-primary);
     --text-muted: var(--text-secondary);
-    --text-dim: #8a9ab5;
+    --text-dim: #2d4060;
     --glow: rgba(26, 79, 179, 0.2);
     --glow2: rgba(16, 185, 129, 0.15);
     --font-mono: 'Share Tech Mono', monospace;
@@ -632,6 +632,10 @@ section {
     flex-shrink: 0;
 }
 
+.arch-card.full .arch-feat {
+    color: var(--text) !important;
+}
+
 .esp32 .arch-feat::before {
     color: var(--accent2);
 }
@@ -760,8 +764,8 @@ section {
 }
 
 .qa-tab[data-level="advanced"].active {
-    color: var(--accent3);
-    border-bottom-color: var(--accent3);
+    color: #92400e;
+    border-bottom-color: #92400e;
 }
 
 .qa-panel {
@@ -829,7 +833,7 @@ section {
 }
 
 .qa-item.open .qa-answer {
-    max-height: 400px;
+    max-height: 600px;
 }
 
 .qa-answer-inner {
@@ -905,10 +909,58 @@ footer {
     transform: none;
 }
 
-/* RESPONSIVE */
+/* RESPONSIVE — TABLET */
+@media (max-width: 1024px) {
+    .flow-steps {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+
+    .flow-step:not(:last-child)::after {
+        display: none;
+    }
+
+    .events-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .arch-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* RESPONSIVE — MOBILE */
 @media (max-width: 768px) {
+    nav {
+        padding: 0 1rem;
+    }
+
     .nav-links {
         display: none;
+    }
+
+    #hero {
+        padding: 80px 1rem 4rem;
+    }
+
+    .hero-stats {
+        gap: 0.75rem;
+    }
+
+    .stat-chip {
+        min-width: 80px;
+        padding: 0.75rem 1rem;
+    }
+
+    .stat-chip .val {
+        font-size: 1.4rem;
+    }
+
+    #flow,
+    #architecture,
+    #events,
+    #qa {
+        padding: 3.5rem 1rem;
     }
 
     .flow-steps {
@@ -920,6 +972,10 @@ footer {
         display: none;
     }
 
+    .flow-detail {
+        padding: 1rem;
+    }
+
     .arch-grid {
         grid-template-columns: 1fr;
     }
@@ -928,12 +984,59 @@ footer {
         grid-column: 1;
     }
 
+    .arch-card.full .arch-features {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
     .events-grid {
         grid-template-columns: 1fr;
     }
 
+    .qa-tabs {
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+
+    .qa-tab {
+        font-size: 0.72rem;
+        padding: 0.5rem 0.85rem;
+        flex-shrink: 0;
+    }
+
+    .qa-answer-inner {
+        padding: 0.75rem 1rem 1rem;
+    }
+}
+
+/* RESPONSIVE — SMALL MOBILE */
+@media (max-width: 480px) {
     .hero-stats {
-        gap: 1rem;
+        gap: 0.5rem;
+    }
+
+    .stat-chip {
+        min-width: 70px;
+        padding: 0.6rem 0.75rem;
+    }
+
+    .stat-chip .val {
+        font-size: 1.2rem;
+    }
+
+    .arch-card.full .arch-features {
+        grid-template-columns: 1fr !important;
+    }
+
+    .section-title {
+        font-size: clamp(1.5rem, 7vw, 2.2rem);
+    }
+
+    .qa-question {
+        padding: 0.85rem 1rem;
+    }
+
+    .qa-q-text {
+        font-size: 0.88rem;
     }
 }
 

@@ -392,32 +392,48 @@
 
                 <div class="qa-item">
                     <button class="qa-question">
-                        <span class="qa-q-text">What is BreakSmart and what problem does it solve?</span>
+                        <span class="qa-q-text">What real problem does BreakSmart solve?</span>
                         <span class="qa-arrow">▼</span>
                     </button>
                     <div class="qa-answer">
                         <div class="qa-answer-inner">
-                            BreakSmart is a smart circuit breaker monitoring and control system. It solves the problem
-                            of not being able to remotely manage, monitor, or automate the electrical circuits in a
-                            building. Instead of manually toggling breakers, users can control 4 relay channels (outlet
-                            circuits) from any web browser on the local network, view real-time power consumption, set
-                            automated schedules, and receive alerts — all without cloud dependency.
+                            In most homes and small offices, you have no visibility into whether circuits are overloaded, no way to turn off appliances remotely, and no data on how much electricity each outlet is consuming. If you leave the house and forget a device on, you either go back or leave it running. BreakSmart fixes this: it puts 4 electrical relay circuits under the control of a browser dashboard so you can monitor power draw, toggle outlets on or off from anywhere on your local network, set automated schedules, and receive overload alerts — all in real time, without cloud dependency.
                         </div>
                     </div>
                 </div>
 
                 <div class="qa-item">
                     <button class="qa-question">
-                        <span class="qa-q-text">How does the system work at a high level?</span>
+                        <span class="qa-q-text">Can you give a real-life scenario of how this would be used?</span>
                         <span class="qa-arrow">▼</span>
                     </button>
                     <div class="qa-answer">
                         <div class="qa-answer-inner">
-                            The ESP32 microcontroller serves a browser dashboard and physically controls 4 electrical
-                            relays and reads current sensors. A Node.js backend server running on a PC handles the
-                            logic, stores data in MySQL, and acts as a message broker using WebSocket. The browser talks
-                            to Node.js via REST API and WebSocket. Node.js then sends commands to the ESP32 over
-                            WebSocket to actuate hardware in real time.
+                            Say a small computer shop has 4 outlet circuits: workstations, aircon, a server, and a phone charging station. The owner opens the BreakSmart dashboard on his phone at 9 PM and sees the aircon is still on and pulling 900W even though the shop is closed. He taps the toggle, it cuts off within a second. He also has a schedule set so the server automatically turns off at 11 PM and back on at 7 AM every weekday. If the phone charging station ever exceeds its safe load threshold, a notification badge appears on the dashboard immediately. All of this happens over the store's Wi-Fi with no internet required.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <button class="qa-question">
+                        <span class="qa-q-text">Who benefits most from this system?</span>
+                        <span class="qa-arrow">▼</span>
+                    </button>
+                    <div class="qa-answer">
+                        <div class="qa-answer-inner">
+                            The primary beneficiaries are homeowners and small business owners who want energy visibility and automation without paying for a cloud subscription. Boarding house managers benefit because they can track and control power usage per room. Students in shared spaces benefit because they can split and log energy consumption per outlet. Electricians and engineers benefit because BreakSmart provides a testbed for smart circuit management without expensive proprietary hardware. In general, anyone managing multiple appliances across a local space and wanting real-time control and data is the target user.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <button class="qa-question">
+                        <span class="qa-q-text">How is BreakSmart different from just using a smart plug or a manual breaker?</span>
+                        <span class="qa-arrow">▼</span>
+                    </button>
+                    <div class="qa-answer">
+                        <div class="qa-answer-inner">
+                            Smart plugs are isolated — each one is its own app, its own cloud account, and they share no data with each other. They also require a working internet connection. A manual breaker gives no data at all: you flip it physically and have no record of what happened or when. BreakSmart puts 4 circuits into one unified, offline-capable dashboard with real-time power monitoring across all channels simultaneously, centralized activity logs, cross-circuit automated scheduling, and threshold-based overload alerts. It runs entirely on your local network with no subscription or cloud account.
                         </div>
                     </div>
                 </div>
@@ -429,59 +445,48 @@
                     </button>
                     <div class="qa-answer">
                         <div class="qa-answer-inner">
-                            No. BreakSmart is fully offline-capable after initial setup. The ESP32 serves the entire
-                            dashboard (HTML, JavaScript, Chart.js) from its own flash filesystem over your local Wi-Fi.
-                            The Node.js backend and MySQL database run on a local PC. Internet is only needed during
-                            initial setup to download Node.js, XAMPP, and libraries — never at runtime.
+                            No. BreakSmart is fully offline after initial setup. The ESP32 hosts the entire dashboard (HTML, JavaScript, Chart.js) from its own built-in flash filesystem over your local Wi-Fi. The Node.js backend and MySQL database run on a local PC. All communication — relay commands, sensor data, WebSocket events — happens entirely within your home or office network. Internet is only needed once during initial installation to download Node.js, XAMPP, and the project libraries.
                         </div>
                     </div>
                 </div>
 
                 <div class="qa-item">
                     <button class="qa-question">
-                        <span class="qa-q-text">What does the user actually see and control?</span>
+                        <span class="qa-q-text">What does a user actually do when they log in?</span>
                         <span class="qa-arrow">▼</span>
                     </button>
                     <div class="qa-answer">
                         <div class="qa-answer-inner">
-                            The dashboard has several pages: a main Dashboard with live power stats and a gauge, an
-                            Outlet Control page with 4 relay cards (toggle buttons, rename, schedule), an Analytics page
-                            with energy bar/line charts, a Logs page with the activity history, a Notifications panel,
-                            and a Settings page for thresholds and user preferences.
+                            After entering their email and password, the user lands on a Dashboard showing total active power draw, how many of the 4 relays are currently on, and a real-time energy gauge. From the Outlet Control page, they can toggle any relay on or off — the physical relay clicks within 100 ms — rename outlets (e.g. "Aircon," "Water Heater"), and assign automated on/off schedules per day of the week. The Analytics page shows energy history in bar and line charts. The Logs page records every action — toggles, schedule executions, overload events — with timestamps and the user who triggered each one. The Notifications bell badge lights up whenever a circuit exceeds its configured safe threshold.
                         </div>
                     </div>
                 </div>
 
                 <div class="qa-item">
                     <button class="qa-question">
-                        <span class="qa-q-text">What hardware is required?</span>
+                        <span class="qa-q-text">What hardware components does this project use?</span>
                         <span class="qa-arrow">▼</span>
                     </button>
                     <div class="qa-answer">
                         <div class="qa-answer-inner">
-                            The core hardware is an ESP32 development board, a 4-channel relay module (active-LOW), 4×
-                            ACS712 current sensors, an HLK-5M05 AC-to-DC converter for powering the ESP32, a standard
-                            MCB (miniature circuit breaker), and a 20×4 I²C LCD display. All components connect to the
-                            ESP32 GPIOs — relays on GPIO 19/18/5/17, sensors on ADC pins 34/35/32/33, and LCD on I²C
-                            pins GPIO21/22.
+                            The core hardware is an ESP32 development board (microcontroller + Wi-Fi), a 4-channel active-LOW relay module (handles the actual switching of AC circuits), 4× ACS712 current sensors (one per relay channel, measures real-time current draw), an HLK-5M05 AC-to-DC converter (powers the ESP32 directly from AC without a separate adapter), a standard MCB miniature circuit breaker (upstream safety breaker), and a 20×4 I²C LCD display for local status readout. All components connect to the ESP32: relays on GPIO 19/18/5/17, sensors on ADC pins 34/35/32/33, and the LCD on I²C pins GPIO 21/22.
                         </div>
                     </div>
                 </div>
 
                 <div class="qa-item">
                     <button class="qa-question">
-                        <span class="qa-q-text">What are the login credentials?</span>
+                        <span class="qa-q-text">How reliable is the system? What happens if the Wi-Fi or server goes down?</span>
                         <span class="qa-arrow">▼</span>
                     </button>
                     <div class="qa-answer">
                         <div class="qa-answer-inner">
-                            Default admin credentials after running the setup script are: Email: <code
-                                class="detail-code">admin@breaksmart.io</code>, Password: <code
-                                class="detail-code">breaksmart2024</code>. The session is stored in localStorage and
-                            validated server-side on every API request. Sessions expire after 7 days.
+                            The system is designed with multiple fallback layers. If the WebSocket connection drops, the browser automatically switches to HTTP polling every 2 seconds so the UI stays in sync. The ESP32 independently polls the server for due schedules every 60 seconds, so automated relay actions continue firing even without an active WebSocket. If the Node.js server restarts, the ESP32 reconnects automatically using exponential backoff. Relay states are always persisted in MySQL, so the last known state is recovered on every reconnect. Physical relay states are also read back and confirmed via the <code class="detail-code">esp32:relay_ack</code> message, completing a full hardware round-trip on every command.
                         </div>
                     </div>
                 </div>
+
+            </div>
 
             </div>
 
